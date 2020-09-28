@@ -42,19 +42,33 @@ fi
 
 if [ "${HOST}" == "-c" ]; then
 	PREVLIST=""
-	STEP=1
-	for PORT in ${PORTS[@]}; do
+	echo "add action=drop chain=input comment=\"Deny access after bogus port knocking attempt\" in-interface-list=WAN log=yes log-prefix=\"Portknock denied from WAN:\" protocol=${PROTOCOL} src-address-list=portknock:denied"
+	echo "add action=accept chain=input comment=\"Accept SSH after passed port knocking\" dst-port=22 in-interface-list=WAN log=yes log-prefix=\"SSH access from WAN:\" protocol=tcp src-address-list=portknock:passed"
+	STEP=${#PORTS[@]}
+	while [ ${STEP} -gt 0 ]; do
 		if [ "${STEP}" -eq "${#PORTS[@]}" ]; then
 			LIST="portknock:passed"
 			LOG="log=yes log-prefix=\"Portknock passed:\""
 		else
 			LIST="portknock:${STEP}"
+			LOG=""
 		fi
-		echo "add action=add-src-to-address-list address-list=${LIST} ${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
-		PREVLIST="src-address-list=portknock:${STEP}"
-		STEP=$((${STEP}+1))
+		if [ "${STEP}" -eq 1 ]; then
+			PREVLIST=""
+		else
+			PREVLIST="portknock:$((${STEP}-1))"
+		fi
+		PORT=${PORTS[$((${STEP}-1))]}
+		if [ -n "${PREVLIST}" ]; then
+			echo "add action=add-src-to-address-list address-list=portknock:denied src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}, block\" dst-port=!${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
+			echo "add action=add-src-to-address-list address-list=${LIST} src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}, proceed\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
+			echo "add action=drop src-address-list=${PREVLIST} chain=input comment=\"Port knocking, step ${STEP}, finish\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
+		else
+			echo "add action=add-src-to-address-list address-list=${LIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}, proceed\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
+			echo "add action=drop chain=input comment=\"Port knocking, step ${STEP}, finish\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
+		fi
+		STEP=$((${STEP}-1))
 	done
-	echo "add action=accept chain=input comment=\"Accept SSH after passed port knocking\" dst-port=22 in-interface-list=WAN log=yes log-prefix=\"SSH access from WAN:\" protocol=tcp src-address-list=portknock:passed"
 	exit
 fi
 
