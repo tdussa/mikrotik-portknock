@@ -3,8 +3,12 @@
 if [ -z "$1" ]; then
 	cat <<EOF
 No host specified!
+
+This script takes a pre-shared key from standard input and uses it to
+determine the sequence of ports to knock.
+
 Usage:
-	$0 <host|-d> [rounds]
+	$0 <host|-c|-d> [rounds]
 EOF
 	exit
 fi
