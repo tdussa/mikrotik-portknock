@@ -46,7 +46,7 @@ fi
 
 if [ "${HOST}" == "-c" ]; then
 	PREVLIST=""
-	echo "add action=drop chain=input comment=\"Deny access after bogus port knocking attempt\" in-interface-list=WAN log=yes log-prefix=\"Portknock denied from WAN:\" protocol=${PROTOCOL} src-address-list=portknock:denied"
+	echo "add action=drop chain=input comment=\"Deny access after bogus port knocking attempt\" in-interface-list=WAN log=yes log-prefix=\"Portknock denied from WAN:\" src-address-list=portknock:denied"
 	echo "add action=accept chain=input comment=\"Accept SSH after passed port knocking\" dst-port=22 in-interface-list=WAN log=yes log-prefix=\"SSH access from WAN:\" protocol=tcp src-address-list=portknock:passed"
 	STEP=${#PORTS[@]}
 	while [ ${STEP} -gt 0 ]; do
@@ -64,12 +64,12 @@ if [ "${HOST}" == "-c" ]; then
 		fi
 		PORT=${PORTS[$((${STEP}-1))]}
 		if [ -n "${PREVLIST}" ]; then
-			echo "add action=add-src-to-address-list address-list=portknock:denied src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}, block\" dst-port=!${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
-			echo "add action=add-src-to-address-list address-list=${LIST} src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}, proceed\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
-			echo "add action=drop src-address-list=${PREVLIST} chain=input comment=\"Port knocking, step ${STEP}, finish\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
+			echo "add action=add-src-to-address-list address-list=portknock:denied src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking (${PROTOCOL}), step ${STEP}, block\" dst-port=!${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
+			echo "add action=add-src-to-address-list address-list=${LIST} src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking (${PROTOCOL}), step ${STEP}, proceed\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
+			echo "add action=drop src-address-list=${PREVLIST} chain=input comment=\"Port knocking (${PROTOCOL}), step ${STEP}, finish\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
 		else
-			echo "add action=add-src-to-address-list address-list=${LIST} address-list-timeout=5s chain=input comment=\"Port knocking, step ${STEP}, proceed\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
-			echo "add action=drop chain=input comment=\"Port knocking, step ${STEP}, finish\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
+			echo "add action=add-src-to-address-list address-list=${LIST} address-list-timeout=5s chain=input comment=\"Port knocking (${PROTOCOL}), step ${STEP}, proceed\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
+			echo "add action=drop chain=input comment=\"Port knocking (${PROTOCOL}), step ${STEP}, finish\" dst-port=${PORT} in-interface-list=WAN protocol=${PROTOCOL}"
 		fi
 		STEP=$((${STEP}-1))
 	done
