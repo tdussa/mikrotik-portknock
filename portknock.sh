@@ -120,7 +120,7 @@ local portlist {${TIMEDPORTSARRAY}}\\
 \\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$previous]) [/ip firewall filter find comment~\\\"timed step previous\\\"]\\
 \\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$current]) [/ip firewall filter find comment~\\\"timed step current\\\"]\\
 \\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$next]) [/ip firewall filter find comment~\\\"timed step next\\\"]\""
-		echo "/system scheduler add comment=\"Portknock Timed Step Updater\" interval=1m name=PortknockUpdater on-event=PortknockUpdater policy=read,write,test start-time=startup"
+		echo "/system scheduler add comment=\"Portknock Timed Step Updater\" start-time=00:00:00 interval=1m name=PortknockUpdater on-event=PortknockUpdater policy=read,write,test"
 	fi
 	exit
 fi
