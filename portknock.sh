@@ -73,8 +73,6 @@ if [ "${HOST}" == "-c" ]; then
 		LIST="portknock:passed"
 		PREVLIST="portknock:timed"
 		LOG="log=yes log-prefix=\"Portknock passed:\""
-		echo "add action=add-src-to-address-list address-list=${LIST} src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking (${PROTOCOL}), timed step previous, proceed\" dst-port=0 in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
-		echo "add action=drop src-address-list=${PREVLIST} chain=input comment=\"Port knocking (${PROTOCOL}), timed step previous, finish\" dst-port=0 in-interface-list=WAN protocol=${PROTOCOL}"
 		echo "add action=add-src-to-address-list address-list=${LIST} src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking (${PROTOCOL}), timed step current, proceed\" dst-port=0 in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
 		echo "add action=drop src-address-list=${PREVLIST} chain=input comment=\"Port knocking (${PROTOCOL}), timed step current, finish\" dst-port=0 in-interface-list=WAN protocol=${PROTOCOL}"
 		echo "add action=add-src-to-address-list address-list=${LIST} src-address-list=${PREVLIST} address-list-timeout=5s chain=input comment=\"Port knocking (${PROTOCOL}), timed step next, proceed\" dst-port=0 in-interface-list=WAN protocol=${PROTOCOL} ${LOG}"
@@ -115,11 +113,11 @@ if [ "${HOST}" == "-c" ]; then
 		echo "/system script add comment=\"Portknock Timed Step Updater\" dont-require-permissions=no name=PortknockUpdater owner=admin policy=read,write,test source=\"\\
 local portlist {${TIMEDPORTSARRAY}}\\
 \\nlocal current [:tonum [:pick [/system clock get time] 3 5]]\\
-\\nlocal previous ((\\\$current+59) % 60)\\
 \\nlocal next ((\\\$current+1) % 60)\\
-\\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$previous]) [/ip firewall filter find comment~\\\"timed step previous\\\"]\\
 \\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$current]) [/ip firewall filter find comment~\\\"timed step current\\\"]\\
-\\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$next]) [/ip firewall filter find comment~\\\"timed step next\\\"]\""
+\\n/ip firewall filter set dst-port=(\\\$portlist->[:tostr \\\$next]) [/ip firewall filter find comment~\\\"timed step next\\\"]\\
+\\n/ipv6 firewall filter set dst-port=(\\\$portlist->[:tostr \\\$current]) [/ipv6 firewall filter find comment~\\\"timed step current\\\"]\\
+\\n/ipv6 firewall filter set dst-port=(\\\$portlist->[:tostr \\\$next]) [/ipv6 firewall filter find comment~\\\"timed step next\\\"]\""
 		echo "/system scheduler add comment=\"Portknock Timed Step Updater\" start-time=00:00:00 interval=1m name=PortknockUpdater on-event=PortknockUpdater policy=read,write,test"
 	fi
 	exit
